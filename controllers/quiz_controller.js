@@ -28,7 +28,7 @@ exports.index = function (req, res){
  }
 
  models.Quiz.findAll({ where: ["pregunta like ?", busqueda]}).then(function (quizes){
-           res.render('quizes/index', {quizes: quizes, errors: []});
+           res.render('quizes/index.ejs', {quizes: quizes, errors: []});
         }
       ).catch(function(error) { next(error);})
 };
@@ -36,7 +36,7 @@ exports.index = function (req, res){
 //GET /quizes/new
 exports.new = function(req, res) {
   var quiz = models.Quiz.build( //crea objeto quiz
-    {pregunta: "Pregunta", respuesta: "Respuesta"}
+    {pregunta: "Pregunta", respuesta: "Respuesta", tema: ""}
    );
 
    res.render('quizes/new', {quiz: quiz, errors: []});
@@ -64,23 +64,27 @@ exports.answer = function (req, res){
 };
 
 //POST /quizes/create
-exports.create = function(req, res) {
-  var quiz = models.Quiz.build (req.body.quiz);
-  quiz.validate().then(function(err){
-      if (err) {
-         res.render('quizes/new', {quiz: quiz, errors: err.errors});
-      } else {
-         //guarda en DB los campos pregunta y respuesta de Quiz
-         quiz.save({fields: ["pregunta", "respuesta"]})
-         .then(function(){ res.redirect('/quizes')})
-      }
-  }); //Redireccion HTTP (URL relativo) lista de preguntas
+exports.create = function (req, res) {
+  var quiz = models.Quiz.build(req.body.quiz);
+  quiz.validate().then(
+	function(err){
+      		if (err){
+         		res.render('quizes/new', {quiz: quiz, errors: err.errors});
+      		} else {
+         		//guarda en DB los campos pregunta y respuesta de Quiz
+         		quiz.save({fields: ["pregunta","respuesta","tema"]}).then(function(){ 
+				res.redirect('/quizes')
+			});
+      		}
+  	}
+  ); //Redireccion HTTP (URL relativo) lista de preguntas
 };
 //PUT /quizes/:id
 exports.update = function(req, res) {
   req.quiz.pregunta = req.body.quiz.pregunta;
   req.quiz.respuesta = req.body.quiz.respuesta;
-  req.quiz.tematica = req.body.quiz.tematica;
+  req.quiz.tema = req.body.quiz.tema;
+ 
 
   req.quiz.validate().then(function(err) {
     if (err) {
@@ -90,9 +94,10 @@ exports.update = function(req, res) {
       });
     } else {
       req.quiz.save({
-        fields: ['pregunta', 'respuesta', 'tematica']
+        fields: ['pregunta', 'respuesta', 'tema']
       }).then(function() {
         res.redirect('/quizes');
+
       });
     }
   });
